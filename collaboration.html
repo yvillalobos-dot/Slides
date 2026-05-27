@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How We Built It</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Century+Gothic&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Century Gothic', 'Gill Sans', 'Trebuchet MS', Arial, sans-serif;
+    background: #ffffff;
+    color: #1a1a2e;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.5s ease;
+    padding: 48px 72px 72px;
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: all; }
+
+  /* nav */
+  .nav {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center; z-index: 99;
+  }
+  .nav button {
+    background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25);
+    color: #6366F1; padding: 7px 22px; border-radius: 20px; cursor: pointer;
+    font-size: 12px; font-family: inherit; transition: all 0.2s;
+  }
+  .nav button:hover { background: rgba(99,102,241,0.15); }
+  .dots { display: flex; gap: 8px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(99,102,241,0.2); cursor: pointer; transition: all 0.2s; }
+  .dot.active { background: #6366F1; width: 20px; border-radius: 4px; }
+  .counter { position: fixed; top: 20px; right: 36px; font-size: 11px; color: rgba(99,102,241,0.4); z-index:99; }
+
+  /* ── colors ── */
+  .blue  { color: #3B82F6; }
+  .pink  { color: #EC4899; }
+  .indigo { color: #6366F1; }
+  .purple { color: #8B5CF6; }
+  .muted  { color: #9CA3AF; }
+
+  /* ── SLIDE 1: TITLE ── */
+  #s0 {
+    background: #ffffff;
+    justify-content: center; align-items: center; text-align: center;
+  }
+  #s0 .eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #EC4899; margin-bottom: 18px; }
+  #s0 h1 { font-size: 58px; font-weight: 700; line-height: 1.1; color: #1e1b4b; margin-bottom: 18px; }
+  #s0 .sub { font-size: 18px; color: #6B7280; max-width: 560px; line-height: 1.6; margin-bottom: 40px; }
+  .pill-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .pill { padding: 8px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; }
+  .pill-blue  { background: #EFF6FF; color: #3B82F6; border: 1px solid #BFDBFE; }
+  .pill-pink  { background: #FDF2F8; color: #EC4899; border: 1px solid #FBCFE8; }
+  .pill-indigo { background: #EEF2FF; color: #6366F1; border: 1px solid #C7D2FE; }
+
+  /* ── SLIDE 2: THE STORY ── */
+  #s1 { background: #ffffff; }
+  .story-header { margin-bottom: 32px; }
+  .story-header .eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #EC4899; margin-bottom: 10px; }
+  .story-header h2 { font-size: 34px; font-weight: 700; color: #1e1b4b; }
+
+  .timeline { display: flex; flex-direction: column; gap: 0; flex: 1; justify-content: center; }
+  .tl-item { display: flex; gap: 28px; align-items: flex-start; position: relative; padding-bottom: 24px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 40px; }
+  .tl-dot {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0; z-index: 1;
+  }
+  .tl-line { flex: 1; width: 2px; background: linear-gradient(180deg, #C7D2FE, #FBCFE8); min-height: 24px; }
+  .tl-item:last-child .tl-line { display: none; }
+  .tl-content { padding-top: 6px; }
+  .tl-content h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .tl-content p  { font-size: 14px; color: #6B7280; line-height: 1.55; }
+
+  .dot-blue   { background: #EFF6FF; border: 2px solid #BFDBFE; }
+  .dot-pink   { background: #FDF2F8; border: 2px solid #FBCFE8; }
+  .dot-indigo { background: #EEF2FF; border: 2px solid #C7D2FE; }
+  .dot-purple { background: #F5F3FF; border: 2px solid #DDD6FE; }
+
+  /* ── SLIDE 3: HOW IT WORKED ── */
+  #s2 { background: #ffffff; }
+  .collab-header { margin-bottom: 28px; }
+  .collab-header .eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #3B82F6; margin-bottom: 10px; }
+  .collab-header h2 { font-size: 34px; font-weight: 700; color: #1e1b4b; }
+
+  .two-col { display: flex; gap: 28px; flex: 1; }
+  .col-side { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+
+  .who-card {
+    border-radius: 18px; padding: 22px 22px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .who-blue  { background: #EFF6FF; border: 1px solid #BFDBFE; }
+  .who-pink  { background: #FDF2F8; border: 1px solid #FBCFE8; }
+  .who-title { display: flex; align-items: center; gap: 12px; }
+  .who-icon  { font-size: 26px; }
+  .who-name  { font-size: 17px; font-weight: 700; }
+  .who-role  { font-size: 12px; color: #9CA3AF; margin-top: 1px; }
+  .contrib-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .contrib-list li { font-size: 13px; color: #4B5563; display: flex; gap: 8px; align-items: flex-start; }
+  .contrib-list li::before { content: '→'; flex-shrink: 0; margin-top: 1px; }
+  .li-blue::before  { color: #3B82F6; }
+  .li-pink::before  { color: #EC4899; }
+
+  .insight-box {
+    border-radius: 14px; padding: 18px 20px;
+    background: linear-gradient(135deg, #EEF2FF, #FDF2F8);
+    border: 1px solid #E0E7FF;
+  }
+  .insight-box h3 { font-size: 14px; font-weight: 700; color: #6366F1; margin-bottom: 8px; }
+  .insight-box p  { font-size: 13px; color: #6B7280; line-height: 1.55; }
+
+  /* ── SLIDE 4: RESULT ── */
+  #s3 {
+    background: linear-gradient(135deg, #EEF2FF 0%, #FDF2F8 100%);
+    justify-content: center; align-items: center; text-align: center;
+  }
+  #s3 .eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #6366F1; margin-bottom: 16px; }
+  #s3 h2 { font-size: 42px; font-weight: 700; color: #1e1b4b; line-height: 1.15; margin-bottom: 16px; }
+  #s3 .sub { font-size: 16px; color: #6B7280; max-width: 520px; line-height: 1.65; margin-bottom: 36px; }
+
+  .result-cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; max-width: 720px; }
+  .rc {
+    background: #fff; border-radius: 16px; padding: 22px 20px; text-align: center;
+    flex: 1; min-width: 150px; max-width: 190px;
+    box-shadow: 0 2px 16px rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.1);
+  }
+  .rc-val  { font-size: 30px; font-weight: 700; margin-bottom: 6px; }
+  .rc-lbl  { font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; }
+
+  .credit {
+    margin-top: 32px; font-size: 13px; color: #9CA3AF;
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+  }
+  .credit a { color: #6366F1; text-decoration: none; }
+
+  /* decorative blobs */
+  .blob {
+    position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.18; pointer-events: none; z-index: 0;
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ══ SLIDE 1: TITLE ══ -->
+  <div class="slide active" id="s0">
+    <div class="blob" style="width:320px;height:320px;background:#6366F1;top:-80px;left:-80px;"></div>
+    <div class="blob" style="width:280px;height:280px;background:#EC4899;bottom:-60px;right:-60px;"></div>
+    <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;">
+      <div class="eyebrow">A Human + AI Collaboration</div>
+      <h1>How We Built<br>the FY27 Forecast</h1>
+      <p class="sub">A Sales Strategy Analyst and Claude worked together over multiple sessions to design, build, and validate a production-grade pipeline forecast model from scratch.</p>
+      <div class="pill-row">
+        <div class="pill pill-blue">Python Model</div>
+        <div class="pill pill-pink">Excel Dashboard</div>
+        <div class="pill pill-indigo">87.7% Accuracy</div>
+        <div class="pill pill-blue">Monthly Refresh</div>
+        <div class="pill pill-pink">Snap Win Rates</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2: THE STORY ══ -->
+  <div class="slide" id="s1">
+    <div class="story-header">
+      <div class="eyebrow">The Journey</div>
+      <h2>From idea to working model</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot dot-blue">💡</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <h3 class="blue">The Problem</h3>
+          <p>Specialist Sales needed a way to forecast FY27 ACV by product and by month — something that could update each month as new pipeline and closed data came in, without rebuilding from scratch.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot dot-pink">🧱</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <h3 class="pink">Building the Foundation</h3>
+          <p>We designed a two-component model: staged pipe × yield rates, plus intra-quarter ACV from deals with short sales cycles. Three-tier blending across FQ2/3/4 based on how much the pipe can be trusted.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot dot-indigo">📸</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <h3 class="indigo">Adding the Snap Win Rates</h3>
+          <p>We incorporated two years of weekly deal snapshots to train win rates by product × stage × days left in quarter — a much more precise signal than flat historical yield rates.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot dot-purple">✅</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <h3 class="purple">Validation & Delivery</h3>
+          <p>Backtested on FY27 Q1 (87.7% accuracy) and FY26 Q2 (87.8% on Service). Output: a fully formatted Excel dashboard that regenerates in 30 seconds each month.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3: HOW WE COLLABORATED ══ -->
+  <div class="slide" id="s2">
+    <div class="collab-header">
+      <div class="eyebrow">The Collaboration</div>
+      <h2>Each brought something different</h2>
+    </div>
+    <div class="two-col">
+      <div class="col-side">
+        <div class="who-card who-blue">
+          <div class="who-title">
+            <div class="who-icon">👤</div>
+            <div>
+              <div class="who-name blue">The Sales Strategy Analyst</div>
+              <div class="who-role">Specialist Sales</div>
+            </div>
+          </div>
+          <ul class="contrib-list">
+            <li class="li-blue">Domain expertise — how deals actually close, what matters by product</li>
+            <li class="li-blue">The data — pipeline exports, ACV files, weekly snap files</li>
+            <li class="li-blue">Real-world gut checks — "Service should be around $8M, not $4M"</li>
+            <li class="li-blue">Iterative feedback — what to improve, what to trust, what to question</li>
+            <li class="li-blue">The commit layer — rep calls that live outside the model</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-side">
+        <div class="who-card who-pink">
+          <div class="who-title">
+            <div class="who-icon">🤖</div>
+            <div>
+              <div class="who-name pink">Claude (AI)</div>
+              <div class="who-role">Anthropic · Claude Sonnet</div>
+            </div>
+          </div>
+          <ul class="contrib-list">
+            <li class="li-pink">Translated business logic into working Python code</li>
+            <li class="li-pink">Designed the modeling approach — blend weights, recency weighting, snap join</li>
+            <li class="li-pink">Debugged data quirks — competitor duplicates, 15 vs 18-digit IDs, column mismatches</li>
+            <li class="li-pink">Built the Excel dashboard with live formulas and formatting</li>
+            <li class="li-pink">Ran backtests and explained why accuracy was off — and fixed it</li>
+          </ul>
+        </div>
+        <div class="insight-box">
+          <h3>Key insight</h3>
+          <p>Neither could have built this alone. The model needed real sales intuition to be calibrated correctly — and engineering depth to actually work at scale.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4: RESULT ══ -->
+  <div class="slide" id="s3">
+    <div class="blob" style="width:350px;height:350px;background:#6366F1;top:-100px;right:-100px;"></div>
+    <div class="blob" style="width:280px;height:280px;background:#EC4899;bottom:-80px;left:-80px;"></div>
+    <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center;">
+      <div class="eyebrow">The Result</div>
+      <h2>A production model<br>built in days, not months</h2>
+      <p class="sub">What would typically require a data team, weeks of scoping, and an engineering sprint — delivered conversationally, iterated in real time.</p>
+      <div class="result-cards">
+        <div class="rc">
+          <div class="rc-val blue">6</div>
+          <div class="rc-lbl">Products</div>
+        </div>
+        <div class="rc">
+          <div class="rc-val pink">3</div>
+          <div class="rc-lbl">Quarters</div>
+        </div>
+        <div class="rc">
+          <div class="rc-val indigo">87.7%</div>
+          <div class="rc-lbl">Accuracy</div>
+        </div>
+        <div class="rc">
+          <div class="rc-val blue">30s</div>
+          <div class="rc-lbl">Monthly Refresh</div>
+        </div>
+        <div class="rc">
+          <div class="rc-val pink">11</div>
+          <div class="rc-lbl">Excel Tabs</div>
+        </div>
+      </div>
+      <div class="credit">
+        Built with <a href="https://claude.ai">Claude</a> &nbsp;·&nbsp; Anthropic &nbsp;·&nbsp; May 2026
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="go(1)">Next →</button>
+</div>
+<div class="counter" id="counter"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  const dotsEl = document.getElementById('dots');
+  const counterEl = document.getElementById('counter');
+
+  slides.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' active':'');
+    d.onclick = () => show(i);
+    dotsEl.appendChild(d);
+  });
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('active');
+    counterEl.textContent = (cur+1) + ' / ' + slides.length;
+  }
+
+  function go(dir) { show(cur + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+    if (e.key==='ArrowLeft' ||e.key==='ArrowUp')   go(-1);
+  });
+
+  show(0);
+</script>
+</body>
+</html>
